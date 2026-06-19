@@ -24,10 +24,13 @@ import {
   exportVendorInvoices,
   vendorCustomers,
   exportVendorCustomers,
+  clearVendorSyncData,
   createKeyRequest,
   confirmKeyPayment,
   sendVendorRenewal,
-  resendKeyEmail
+  resendKeyEmail,
+  triggerSyncToMobile,
+  importVendorSyncData
 } from '../controllers/admin.controller';
 
 export const adminRoutes = Router();
@@ -46,6 +49,9 @@ adminRoutes.get('/vendors/:id/invoices', catchAsync(vendorInvoices));
 adminRoutes.get('/vendors/:id/invoices/export', catchAsync(exportVendorInvoices));
 adminRoutes.get('/vendors/:id/customers', catchAsync(vendorCustomers));
 adminRoutes.get('/vendors/:id/customers/export', catchAsync(exportVendorCustomers));
+adminRoutes.post('/vendors/:id/clear-sync', catchAsync(clearVendorSyncData));
+adminRoutes.post('/vendors/:id/sync-to-mobile', catchAsync(triggerSyncToMobile));
+adminRoutes.post('/vendors/:id/import-sync', catchAsync(importVendorSyncData));
 adminRoutes.post('/keys/generate', catchAsync(generateKeys));
 adminRoutes.post('/keys/request', catchAsync(createKeyRequest));
 adminRoutes.post('/keys/:id/confirm-payment', catchAsync(confirmKeyPayment));

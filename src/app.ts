@@ -12,6 +12,12 @@ export const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Simple request logger for debugging
+app.use((req, res, next) => {
+  console.log(`[HTTP] ${req.method} ${req.url}`);
+  next();
+});
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get('/health', (_req, res) => {

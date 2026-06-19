@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Op, Sequelize } from 'sequelize';
 import { Vendor, VendorCustomer, VendorInvoice, VendorProduct, VendorShop } from '../models';
 import { catchAsync } from '../utils/catch-async';
 
@@ -54,7 +55,38 @@ function parseDate(value?: string | null) {
   return new Date(dateStr);
 }
 
-async function upsertProducts(vendorId: string, products: ProductPayload[] = []) {
+export async function upsertProducts(vendorId: string, products: ProductPayload[] = []) {
+  const incomingLocalIds = products
+    .map(p => p.localId ?? p.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  if (incomingLocalIds.length > 0) {
+    await VendorProduct.destroy({
+      where: {
+        vendorId,
+        [Op.or]: [
+          {
+            localId: {
+              [Op.notIn]: incomingLocalIds
+            }
+          },
+          {
+            localId: null
+          },
+          {
+            localId: ''
+          }
+        ]
+      } as any
+    });
+  } else {
+    await VendorProduct.destroy({
+      where: {
+        vendorId
+      }
+    });
+  }
+
   for (const product of products) {
     const localId = product.localId ?? product.id;
     if (!localId || !product.name) {
@@ -67,11 +99,63 @@ async function upsertProducts(vendorId: string, products: ProductPayload[] = [])
     const expiryDate = parseDate(product.expiryDate);
     const remoteUpdatedAt = parseDate(product.updatedAt);
 
-    const existing = await VendorProduct.findOne({ where: { vendorId, localId } });
+    const barcode = product.barcode ? product.barcode.trim() : null;
+    const name = product.name ? product.name.trim() : '';
+
+    // Check for existing product vendor-wise:
+    // 1. Check by localId
+    let existing = await VendorProduct.findOne({ where: { vendorId, localId } });
+    let matchMethod = '';
+
     if (existing) {
+      matchMethod = 'localId';
+    }
+
+    // 2. If not found, check by standard barcode (case-insensitive and trimmed)
+    if (!existing && barcode && !barcode.toUpperCase().startsWith('MANUAL')) {
+      existing = await VendorProduct.findOne({
+        where: {
+          vendorId,
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn('LOWER', Sequelize.fn('TRIM', Sequelize.col('barcode'))),
+              barcode.toLowerCase()
+            )
+          ]
+        }
+      });
+      if (existing) {
+        matchMethod = 'barcode';
+      }
+    }
+
+    // 3. If still not found, check by exact name (case-insensitive and trimmed)
+    if (!existing && name) {
+      existing = await VendorProduct.findOne({
+        where: {
+          vendorId,
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn('LOWER', Sequelize.fn('TRIM', Sequelize.col('name'))),
+              name.toLowerCase()
+            )
+          ]
+        }
+      });
+      if (existing) {
+        matchMethod = 'name';
+      }
+    }
+
+    if (existing) {
+      if (matchMethod !== 'localId') {
+        console.log(`[Sync] Matching existing product "${existing.name}" (ID: ${existing.id}, old localId: ${existing.localId}) to new localId "${localId}" via ${matchMethod}.`);
+      }
+
       const isSame =
-        existing.name === product.name &&
-        existing.barcode === (product.barcode ?? null) &&
+        existing.localId === localId &&
+        existing.name === name &&
+        existing.barcode === barcode &&
         Number(existing.price) === price &&
         (existing.costPrice === null ? null : Number(existing.costPrice)) === costPrice &&
         Number(existing.stock) === stock &&
@@ -85,8 +169,9 @@ async function upsertProducts(vendorId: string, products: ProductPayload[] = [])
       }
 
       await existing.update({
-        name: product.name,
-        barcode: product.barcode ?? null,
+        localId, // Update localId in case it changed (uninstall/reinstall)
+        name,
+        barcode,
         price,
         costPrice,
         stock,
@@ -100,8 +185,8 @@ async function upsertProducts(vendorId: string, products: ProductPayload[] = [])
       await VendorProduct.create({
         vendorId,
         localId,
-        name: product.name,
-        barcode: product.barcode ?? null,
+        name,
+        barcode,
         price,
         costPrice,
         stock,
@@ -115,7 +200,7 @@ async function upsertProducts(vendorId: string, products: ProductPayload[] = [])
   }
 }
 
-async function upsertInvoices(vendorId: string, invoices: InvoicePayload[] = []) {
+export async function upsertInvoices(vendorId: string, invoices: InvoicePayload[] = []) {
   for (const invoice of invoices) {
     const localId = invoice.localId ?? invoice.id;
     const invoiceCreatedAt = parseDate(invoice.invoiceCreatedAt ?? invoice.createdAt);
@@ -176,7 +261,7 @@ async function upsertInvoices(vendorId: string, invoices: InvoicePayload[] = [])
   }
 }
 
-async function upsertShop(vendorId: string, shop?: Record<string, unknown>) {
+export async function upsertShop(vendorId: string, shop?: Record<string, unknown>) {
   if (!shop) {
     return;
   }
@@ -234,7 +319,38 @@ async function upsertShop(vendorId: string, shop?: Record<string, unknown>) {
   }
 }
 
-async function upsertCustomers(vendorId: string, customers: CustomerPayload[] = []) {
+export async function upsertCustomers(vendorId: string, customers: CustomerPayload[] = []) {
+  const incomingLocalIds = customers
+    .map(c => c.localId ?? c.id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  if (incomingLocalIds.length > 0) {
+    await VendorCustomer.destroy({
+      where: {
+        vendorId,
+        [Op.or]: [
+          {
+            localId: {
+              [Op.notIn]: incomingLocalIds
+            }
+          },
+          {
+            localId: null
+          },
+          {
+            localId: ''
+          }
+        ]
+      } as any
+    });
+  } else {
+    await VendorCustomer.destroy({
+      where: {
+        vendorId
+      }
+    });
+  }
+
   for (const customer of customers) {
     const localId = customer.localId ?? customer.id;
     if (!localId || !customer.name) {
@@ -280,7 +396,7 @@ async function upsertCustomers(vendorId: string, customers: CustomerPayload[] = 
   }
 }
 
-async function markSynced(vendor: Vendor) {
+export async function markSynced(vendor: Vendor) {
   await vendor.update({ lastSyncAt: new Date() });
 }
 
@@ -302,6 +418,10 @@ export const pullSync = catchAsync(async (_req: Request, res: Response) => {
     VendorCustomer.findAll({ where: { vendorId: vendor.id }, order: [['name', 'ASC']] }),
     VendorShop.findOne({ where: { vendorId: vendor.id } })
   ]);
+
+  if (vendor.syncToMobilePending) {
+    await vendor.update({ syncToMobilePending: false });
+  }
 
   res.json({ products, invoices, customers, shop });
 });
@@ -350,3 +470,9 @@ export const syncStatus = catchAsync(async (_req: Request, res: Response) => {
     pendingRecords: 0
   });
 });
+
+export const checkSyncStatus = catchAsync(async (_req: Request, res: Response) => {
+  const vendor = res.locals.vendor as Vendor;
+  res.json({ syncPending: vendor.syncToMobilePending });
+});
+

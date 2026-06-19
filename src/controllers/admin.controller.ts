@@ -22,6 +22,13 @@ import {
   sendActivationKeyEmail,
   sendRenewalPaymentEmail
 } from '../services/email.service';
+import {
+  upsertProducts,
+  upsertInvoices,
+  upsertShop,
+  upsertCustomers,
+  markSynced
+} from './sync.controller';
 
 function planAmount(plan: string) {
   if (plan === 'yearly') return 999;
@@ -237,6 +244,27 @@ export async function exportVendorCustomers(req: Request, res: Response) {
   res.setHeader('Content-Type', 'application/json');
   res.send(JSON.stringify(mappedCustomers, null, 2));
 }
+
+export async function clearVendorSyncData(req: Request, res: Response) {
+  const vendorId = routeParam(req.params.id);
+  const vendor = await Vendor.findByPk(vendorId);
+
+  if (!vendor) {
+    res.status(404).json({ message: 'Vendor not found.' });
+    return;
+  }
+
+  await Promise.all([
+    VendorProduct.destroy({ where: { vendorId } }),
+    VendorInvoice.destroy({ where: { vendorId } }),
+    VendorCustomer.destroy({ where: { vendorId } }),
+    VendorShop.destroy({ where: { vendorId } }),
+    vendor.update({ lastSyncAt: null })
+  ]);
+
+  res.json({ ok: true, message: 'Vendor sync data cleared successfully.' });
+}
+
 
 
 export async function generateKeys(req: Request, res: Response) {
@@ -570,3 +598,35 @@ export async function resendKeyEmail(req: Request, res: Response) {
     res.status(500).json({ message: `Failed to resend email: ${error.message}` });
   }
 }
+
+export async function triggerSyncToMobile(req: Request, res: Response) {
+  const vendor = await Vendor.findByPk(routeParam(req.params.id));
+  if (!vendor) {
+    res.status(404).json({ message: 'Vendor not found.' });
+    return;
+  }
+
+  await vendor.update({ syncToMobilePending: true });
+  res.json({ ok: true });
+}
+
+export async function importVendorSyncData(req: Request, res: Response) {
+  const vendor = await Vendor.findByPk(routeParam(req.params.id));
+  if (!vendor) {
+    res.status(404).json({ message: 'Vendor not found.' });
+    return;
+  }
+
+  const { products, invoices, customers, shop } = req.body;
+
+  await upsertProducts(vendor.id, products);
+  await upsertInvoices(vendor.id, invoices);
+  await upsertCustomers(vendor.id, customers);
+  await upsertShop(vendor.id, shop);
+  await markSynced(vendor);
+
+  await vendor.update({ syncToMobilePending: true });
+
+  res.json({ ok: true, lastSyncAt: vendor.lastSyncAt });
+}
+

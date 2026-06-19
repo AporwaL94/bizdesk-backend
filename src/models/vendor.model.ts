@@ -26,6 +26,7 @@ export class Vendor extends Model<InferAttributes<Vendor>, InferCreationAttribut
   declare email: string | null;
   declare notes: string | null;
   declare lastSyncAt: Date | null;
+  declare syncToMobilePending: CreationOptional<boolean>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare shop?: any;
@@ -57,6 +58,7 @@ export function initVendor(sequelize: Sequelize) {
     email: DataTypes.STRING,
     notes: DataTypes.TEXT,
     lastSyncAt: DataTypes.DATE,
+    syncToMobilePending: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
   }, { sequelize, tableName: 'vendors' });
