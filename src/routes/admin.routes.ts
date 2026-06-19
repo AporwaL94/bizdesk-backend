@@ -22,6 +22,8 @@ import {
   vendorProducts,
   exportVendorProducts,
   exportVendorInvoices,
+  vendorCustomers,
+  exportVendorCustomers,
   createKeyRequest,
   confirmKeyPayment,
   sendVendorRenewal,
@@ -42,6 +44,8 @@ adminRoutes.get('/vendors/:id/products', catchAsync(vendorProducts));
 adminRoutes.get('/vendors/:id/products/export', catchAsync(exportVendorProducts));
 adminRoutes.get('/vendors/:id/invoices', catchAsync(vendorInvoices));
 adminRoutes.get('/vendors/:id/invoices/export', catchAsync(exportVendorInvoices));
+adminRoutes.get('/vendors/:id/customers', catchAsync(vendorCustomers));
+adminRoutes.get('/vendors/:id/customers/export', catchAsync(exportVendorCustomers));
 adminRoutes.post('/keys/generate', catchAsync(generateKeys));
 adminRoutes.post('/keys/request', catchAsync(createKeyRequest));
 adminRoutes.post('/keys/:id/confirm-payment', catchAsync(confirmKeyPayment));

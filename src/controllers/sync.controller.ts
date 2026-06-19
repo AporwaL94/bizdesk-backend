@@ -61,20 +61,57 @@ async function upsertProducts(vendorId: string, products: ProductPayload[] = [])
       continue;
     }
 
-    await VendorProduct.upsert({
-      vendorId,
-      localId,
-      name: product.name,
-      barcode: product.barcode ?? null,
-      price: Number(product.price ?? 0),
-      costPrice: product.costPrice ?? null,
-      stock: Number(product.stock ?? 0),
-      category: product.category ?? null,
-      expiryDate: parseDate(product.expiryDate),
-      imageUrl: product.imageUrl ?? null,
-      brand: product.brand ?? null,
-      remoteUpdatedAt: parseDate(product.updatedAt)
-    });
+    const price = Number(product.price ?? 0);
+    const costPrice = product.costPrice ?? null;
+    const stock = Number(product.stock ?? 0);
+    const expiryDate = parseDate(product.expiryDate);
+    const remoteUpdatedAt = parseDate(product.updatedAt);
+
+    const existing = await VendorProduct.findOne({ where: { vendorId, localId } });
+    if (existing) {
+      const isSame =
+        existing.name === product.name &&
+        existing.barcode === (product.barcode ?? null) &&
+        Number(existing.price) === price &&
+        (existing.costPrice === null ? null : Number(existing.costPrice)) === costPrice &&
+        Number(existing.stock) === stock &&
+        existing.category === (product.category ?? null) &&
+        (existing.expiryDate?.getTime() ?? null) === (expiryDate?.getTime() ?? null) &&
+        existing.imageUrl === (product.imageUrl ?? null) &&
+        existing.brand === (product.brand ?? null);
+
+      if (isSame) {
+        continue;
+      }
+
+      await existing.update({
+        name: product.name,
+        barcode: product.barcode ?? null,
+        price,
+        costPrice,
+        stock,
+        category: product.category ?? null,
+        expiryDate,
+        imageUrl: product.imageUrl ?? null,
+        brand: product.brand ?? null,
+        remoteUpdatedAt
+      });
+    } else {
+      await VendorProduct.create({
+        vendorId,
+        localId,
+        name: product.name,
+        barcode: product.barcode ?? null,
+        price,
+        costPrice,
+        stock,
+        category: product.category ?? null,
+        expiryDate,
+        imageUrl: product.imageUrl ?? null,
+        brand: product.brand ?? null,
+        remoteUpdatedAt
+      });
+    }
   }
 }
 
@@ -95,17 +132,47 @@ async function upsertInvoices(vendorId: string, invoices: InvoicePayload[] = [])
       }
     }
 
-    await VendorInvoice.upsert({
-      vendorId,
-      localId,
-      invoiceNumber: invoice.invoiceNumber,
-      totalAmount: Number(invoice.totalAmount ?? 0),
-      customerName: invoice.customerName ?? null,
-      customerPhone: invoice.customerPhone ?? invoice.customerMobile ?? null,
-      items: Array.isArray(parsedItems) ? parsedItems : [],
-      invoiceCreatedAt,
-      remoteUpdatedAt: parseDate(invoice.updatedAt)
-    });
+    const totalAmount = Number(invoice.totalAmount ?? 0);
+    const customerName = invoice.customerName ?? null;
+    const customerPhone = invoice.customerPhone ?? invoice.customerMobile ?? null;
+    const remoteUpdatedAt = parseDate(invoice.updatedAt);
+
+    const existing = await VendorInvoice.findOne({ where: { vendorId, localId } });
+    if (existing) {
+      const isSame =
+        existing.invoiceNumber === invoice.invoiceNumber &&
+        Number(existing.totalAmount) === totalAmount &&
+        existing.customerName === customerName &&
+        existing.customerPhone === customerPhone &&
+        (existing.invoiceCreatedAt?.getTime() ?? null) === (invoiceCreatedAt?.getTime() ?? null) &&
+        JSON.stringify(existing.items) === JSON.stringify(parsedItems);
+
+      if (isSame) {
+        continue;
+      }
+
+      await existing.update({
+        invoiceNumber: invoice.invoiceNumber,
+        totalAmount,
+        customerName,
+        customerPhone,
+        items: Array.isArray(parsedItems) ? parsedItems : [],
+        invoiceCreatedAt,
+        remoteUpdatedAt
+      });
+    } else {
+      await VendorInvoice.create({
+        vendorId,
+        localId,
+        invoiceNumber: invoice.invoiceNumber,
+        totalAmount,
+        customerName,
+        customerPhone,
+        items: Array.isArray(parsedItems) ? parsedItems : [],
+        invoiceCreatedAt,
+        remoteUpdatedAt
+      });
+    }
   }
 }
 
@@ -114,18 +181,57 @@ async function upsertShop(vendorId: string, shop?: Record<string, unknown>) {
     return;
   }
 
-  await VendorShop.upsert({
-    vendorId,
-    shopName: (shop.shopName ?? shop.name ?? null) as string | null,
-    address: (shop.address ?? shop.addressLine1 ?? null) as string | null,
-    phone: (shop.phone ?? shop.phoneNumber ?? null) as string | null,
-    whatsappNumber: (shop.whatsappNumber ?? null) as string | null,
-    upiId: (shop.upiId ?? null) as string | null,
-    gstin: (shop.gstin ?? null) as string | null,
-    logoUrl: (shop.logoUrl ?? null) as string | null,
-    footerMessage: (shop.footerMessage ?? shop.footerText ?? null) as string | null,
-    remoteUpdatedAt: parseDate(shop.updatedAt as string | undefined)
-  });
+  const shopName = (shop.shopName ?? shop.name ?? null) as string | null;
+  const address = (shop.address ?? shop.addressLine1 ?? null) as string | null;
+  const phone = (shop.phone ?? shop.phoneNumber ?? null) as string | null;
+  const whatsappNumber = (shop.whatsappNumber ?? null) as string | null;
+  const upiId = (shop.upiId ?? null) as string | null;
+  const gstin = (shop.gstin ?? null) as string | null;
+  const logoUrl = (shop.logoUrl ?? null) as string | null;
+  const footerMessage = (shop.footerMessage ?? shop.footerText ?? null) as string | null;
+  const remoteUpdatedAt = parseDate(shop.updatedAt as string | undefined);
+
+  const existing = await VendorShop.findOne({ where: { vendorId } });
+  if (existing) {
+    const isSame =
+      existing.shopName === shopName &&
+      existing.address === address &&
+      existing.phone === phone &&
+      existing.whatsappNumber === whatsappNumber &&
+      existing.upiId === upiId &&
+      existing.gstin === gstin &&
+      existing.logoUrl === logoUrl &&
+      existing.footerMessage === footerMessage;
+
+    if (isSame) {
+      return;
+    }
+
+    await existing.update({
+      shopName,
+      address,
+      phone,
+      whatsappNumber,
+      upiId,
+      gstin,
+      logoUrl,
+      footerMessage,
+      remoteUpdatedAt
+    });
+  } else {
+    await VendorShop.create({
+      vendorId,
+      shopName,
+      address,
+      phone,
+      whatsappNumber,
+      upiId,
+      gstin,
+      logoUrl,
+      footerMessage,
+      remoteUpdatedAt
+    });
+  }
 }
 
 async function upsertCustomers(vendorId: string, customers: CustomerPayload[] = []) {
@@ -135,15 +241,42 @@ async function upsertCustomers(vendorId: string, customers: CustomerPayload[] = 
       continue;
     }
 
-    await VendorCustomer.upsert({
-      vendorId,
-      localId,
-      name: customer.name,
-      mobile: customer.mobile ?? null,
-      address: customer.address ?? null,
-      customerCreatedAt: parseDate(customer.createdAt),
-      remoteUpdatedAt: parseDate(customer.updatedAt)
-    });
+    const name = customer.name;
+    const mobile = customer.mobile ?? null;
+    const address = customer.address ?? null;
+    const customerCreatedAt = parseDate(customer.createdAt);
+    const remoteUpdatedAt = parseDate(customer.updatedAt);
+
+    const existing = await VendorCustomer.findOne({ where: { vendorId, localId } });
+    if (existing) {
+      const isSame =
+        existing.name === name &&
+        existing.mobile === mobile &&
+        existing.address === address &&
+        (existing.customerCreatedAt?.getTime() ?? null) === (customerCreatedAt?.getTime() ?? null);
+
+      if (isSame) {
+        continue;
+      }
+
+      await existing.update({
+        name,
+        mobile,
+        address,
+        customerCreatedAt,
+        remoteUpdatedAt
+      });
+    } else {
+      await VendorCustomer.create({
+        vendorId,
+        localId,
+        name,
+        mobile,
+        address,
+        customerCreatedAt,
+        remoteUpdatedAt
+      });
+    }
   }
 }
 

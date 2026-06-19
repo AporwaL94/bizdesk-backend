@@ -4,6 +4,7 @@ import {
   ActivationKey,
   Payment,
   Vendor,
+  VendorCustomer,
   VendorInvoice,
   VendorProduct,
   VendorShop
@@ -214,6 +215,29 @@ export async function exportVendorInvoices(req: Request, res: Response) {
   res.setHeader('Content-Type', 'application/json');
   res.send(JSON.stringify(mappedInvoices, null, 2));
 }
+
+export async function vendorCustomers(req: Request, res: Response) {
+  res.json(await VendorCustomer.findAll({ where: { vendorId: routeParam(req.params.id) }, order: [['name', 'ASC']] }));
+}
+
+export async function exportVendorCustomers(req: Request, res: Response) {
+  const vendorId = routeParam(req.params.id);
+  const customers = await VendorCustomer.findAll({ where: { vendorId }, order: [['name', 'ASC']] });
+
+  const mappedCustomers = customers.map(c => ({
+    id: c.localId,
+    name: c.name,
+    mobile: c.mobile,
+    address: c.address,
+    createdAt: c.customerCreatedAt ? c.customerCreatedAt.toISOString() : null,
+    updatedAt: c.remoteUpdatedAt ? c.remoteUpdatedAt.toISOString() : null
+  }));
+
+  res.setHeader('Content-Disposition', `attachment; filename="customers_export_${vendorId}.json"`);
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(mappedCustomers, null, 2));
+}
+
 
 export async function generateKeys(req: Request, res: Response) {
   const count = Math.max(1, Math.min(500, Number(req.body.count ?? 1)));
