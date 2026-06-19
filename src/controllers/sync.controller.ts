@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Vendor, VendorInvoice, VendorProduct, VendorShop } from '../models';
+import { Vendor, VendorCustomer, VendorInvoice, VendorProduct, VendorShop } from '../models';
 import { catchAsync } from '../utils/catch-async';
 
 type ProductPayload = {
@@ -27,6 +27,16 @@ type InvoicePayload = {
   customerMobile?: string;
   items?: object[];
   invoiceCreatedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type CustomerPayload = {
+  localId?: string;
+  id?: string;
+  name?: string;
+  mobile?: string;
+  address?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -118,6 +128,25 @@ async function upsertShop(vendorId: string, shop?: Record<string, unknown>) {
   });
 }
 
+async function upsertCustomers(vendorId: string, customers: CustomerPayload[] = []) {
+  for (const customer of customers) {
+    const localId = customer.localId ?? customer.id;
+    if (!localId || !customer.name) {
+      continue;
+    }
+
+    await VendorCustomer.upsert({
+      vendorId,
+      localId,
+      name: customer.name,
+      mobile: customer.mobile ?? null,
+      address: customer.address ?? null,
+      customerCreatedAt: parseDate(customer.createdAt),
+      remoteUpdatedAt: parseDate(customer.updatedAt)
+    });
+  }
+}
+
 async function markSynced(vendor: Vendor) {
   await vendor.update({ lastSyncAt: new Date() });
 }
@@ -126,6 +155,7 @@ export const pushSync = catchAsync(async (req: Request, res: Response) => {
   const vendor = res.locals.vendor as Vendor;
   await upsertProducts(vendor.id, req.body.products);
   await upsertInvoices(vendor.id, req.body.invoices);
+  await upsertCustomers(vendor.id, req.body.customers);
   await upsertShop(vendor.id, req.body.shop);
   await markSynced(vendor);
   res.json({ ok: true, syncedAt: vendor.lastSyncAt ?? new Date() });
@@ -133,13 +163,14 @@ export const pushSync = catchAsync(async (req: Request, res: Response) => {
 
 export const pullSync = catchAsync(async (_req: Request, res: Response) => {
   const vendor = res.locals.vendor as Vendor;
-  const [products, invoices, shop] = await Promise.all([
+  const [products, invoices, customers, shop] = await Promise.all([
     VendorProduct.findAll({ where: { vendorId: vendor.id }, order: [['updatedAt', 'DESC']] }),
     VendorInvoice.findAll({ where: { vendorId: vendor.id }, order: [['invoiceCreatedAt', 'DESC']] }),
+    VendorCustomer.findAll({ where: { vendorId: vendor.id }, order: [['name', 'ASC']] }),
     VendorShop.findOne({ where: { vendorId: vendor.id } })
   ]);
 
-  res.json({ products, invoices, shop });
+  res.json({ products, invoices, customers, shop });
 });
 
 export const pushProducts = catchAsync(async (req: Request, res: Response) => {
@@ -163,17 +194,26 @@ export const pushShop = catchAsync(async (req: Request, res: Response) => {
   res.json({ ok: true, syncedAt: new Date() });
 });
 
+export const pushCustomers = catchAsync(async (req: Request, res: Response) => {
+  const vendor = res.locals.vendor as Vendor;
+  await upsertCustomers(vendor.id, req.body.customers ?? req.body);
+  await markSynced(vendor);
+  res.json({ ok: true, syncedAt: new Date() });
+});
+
 export const syncStatus = catchAsync(async (_req: Request, res: Response) => {
   const vendor = res.locals.vendor as Vendor;
-  const [productCount, invoiceCount] = await Promise.all([
+  const [productCount, invoiceCount, customerCount] = await Promise.all([
     VendorProduct.count({ where: { vendorId: vendor.id } }),
-    VendorInvoice.count({ where: { vendorId: vendor.id } })
+    VendorInvoice.count({ where: { vendorId: vendor.id } }),
+    VendorCustomer.count({ where: { vendorId: vendor.id } })
   ]);
 
   res.json({
     lastSync: vendor.lastSyncAt,
     productCount,
     invoiceCount,
+    customerCount,
     pendingRecords: 0
   });
 });

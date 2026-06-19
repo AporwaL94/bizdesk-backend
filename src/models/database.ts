@@ -9,27 +9,28 @@ import { Payment, initPayment } from './payment.model';
 import { VendorProduct, initVendorProduct } from './vendor-product.model';
 import { VendorInvoice, initVendorInvoice } from './vendor-invoice.model';
 import { VendorShop, initVendorShop } from './vendor-shop.model';
+import { VendorCustomer, initVendorCustomer } from './vendor-customer.model';
 
 const isPostgres = env.databaseUrl.startsWith('postgres://') || env.databaseUrl.startsWith('postgresql://');
 
 export const sequelize = isPostgres
   ? new Sequelize(env.databaseUrl, {
-      dialect: 'postgres',
-      logging: false,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
+    dialect: 'postgres',
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
       }
-    })
+    }
+  })
   : new Sequelize({
-      dialect: 'sqlite',
-      storage: env.databaseUrl.startsWith('sqlite://')
-        ? env.databaseUrl.replace('sqlite://', '')
-        : 'database.sqlite',
-      logging: false
-    });
+    dialect: 'sqlite',
+    storage: env.databaseUrl.startsWith('sqlite://')
+      ? env.databaseUrl.replace('sqlite://', '')
+      : 'database.sqlite',
+    logging: false
+  });
 
 function initModels(seq: Sequelize) {
   // Initialize each model schema
@@ -39,6 +40,7 @@ function initModels(seq: Sequelize) {
   initVendorProduct(seq);
   initVendorInvoice(seq);
   initVendorShop(seq);
+  initVendorCustomer(seq);
 
   // Define associations/relations
   Vendor.associate();
@@ -47,11 +49,12 @@ function initModels(seq: Sequelize) {
   VendorProduct.associate();
   VendorInvoice.associate();
   VendorShop.associate();
+  VendorCustomer.associate();
 }
 
 export async function initDatabase() {
   initModels(sequelize);
-  
+
   try {
     console.log('[Database] Running database migrations...');
     const output = execSync('npx --no-install sequelize-cli db:migrate');
