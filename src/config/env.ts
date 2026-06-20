@@ -15,6 +15,5 @@ export const env = {
   emailUser: process.env.EMAIL_USER ?? '',
   emailPass: process.env.EMAIL_PASS ?? '',
   emailFrom: process.env.EMAIL_FROM ?? 'Kirana Desk <no-reply@kiranadesk.com>',
-  adminUpiId: process.env.ADMIN_UPI_ID ?? 'kiranadesk@upi',
-  resendApiKey: process.env.RESEND_API_KEY ?? ''
+  adminUpiId: process.env.ADMIN_UPI_ID ?? 'kiranadesk@upi'
 };
