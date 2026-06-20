@@ -66,7 +66,7 @@ function generateUpiDetails(shopName: string, amount: number) {
   const payeeName = 'Kirana Desk';
   const note = `Kirana Desk Subscription - ${shopName}`;
   const upiUrl = `upi://pay?pa=${payeeVpa}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
-  const qrUrl = `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=${encodeURIComponent(upiUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`;
   return { upiUrl, qrUrl, payeeVpa };
 }
 
