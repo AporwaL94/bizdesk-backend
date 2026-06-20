@@ -464,12 +464,12 @@ export async function createKeyRequest(req: Request, res: Response) {
   });
 
   const amount = planAmount(plan);
-  await sendPaymentRequestEmail({
+  sendPaymentRequestEmail({
     shopName,
     email,
     plan,
     amount
-  });
+  }).catch(console.error);
 
   res.status(201).json(keyRecord);
 }
@@ -509,13 +509,13 @@ export async function confirmKeyPayment(req: Request, res: Response) {
 
   await key.update({ status: 'unused' });
 
-  await sendActivationKeyEmail({
+  sendActivationKeyEmail({
     shopName: key.shopName ?? key.label ?? 'Kirana Store',
     email: key.email!,
     plan: key.plan,
     amount,
     key: key.key
-  });
+  }).catch(console.error);
 
   res.json({ key, payment });
 }
@@ -546,12 +546,12 @@ export async function sendVendorRenewal(req: Request, res: Response) {
   const shopName = vendor.shop?.shopName ?? vendor.deviceName ?? 'Kirana Shop';
   const amount = planAmount(plan);
 
-  await sendRenewalPaymentEmail({
+  sendRenewalPaymentEmail({
     shopName,
     email,
     plan,
     amount
-  });
+  }).catch(console.error);
 
   res.json({ ok: true });
 }
@@ -575,22 +575,22 @@ export async function resendKeyEmail(req: Request, res: Response) {
   try {
     if (key.status === 'pending_payment') {
       // Resend payment request invoice
-      await sendPaymentRequestEmail({
+      sendPaymentRequestEmail({
         shopName: key.shopName ?? key.label ?? 'Kirana Store',
         email: key.email,
         plan: key.plan,
         amount
-      });
+      }).catch(console.error);
       res.json({ ok: true, message: 'Payment request email resent successfully.' });
     } else {
       // Resend activation key email
-      await sendActivationKeyEmail({
+      sendActivationKeyEmail({
         shopName: key.shopName ?? key.label ?? 'Kirana Store',
         email: key.email,
         plan: key.plan,
         amount,
         key: key.key
-      });
+      }).catch(console.error);
       res.json({ ok: true, message: 'Activation key email resent successfully.' });
     }
   } catch (error: any) {
