@@ -21,6 +21,42 @@ const getTransporter = () => {
 
 // Main helper to send email
 async function sendMail(to: string, subject: string, html: string, emailType: string) {
+  // 1. Try Resend if API key is provided (bypasses Render SMTP port blocking)
+  if (env.resendApiKey) {
+    try {
+      let fromEmail = env.emailFrom;
+      if (fromEmail.includes('@gmail.com')) {
+        console.warn(`[EmailService] Warning: Resend does not support sending from @gmail.com. Defaulting to onboarding@resend.dev. Verify your custom domain in Resend for production.`);
+        fromEmail = 'Kirana Desk <onboarding@resend.dev>';
+      }
+
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [to],
+          subject,
+          html,
+        }),
+      });
+
+      const resData = await response.json().catch(() => ({}));
+      if (response.ok) {
+        console.log(`[EmailService] Email sent successfully to ${to} via Resend (ID: ${resData.id}, Type: ${emailType})`);
+        return true;
+      } else {
+        console.error(`[EmailService] Resend API error sending email to ${to}:`, resData);
+      }
+    } catch (error) {
+      console.error(`[EmailService] Resend network error sending email to ${to}:`, error);
+    }
+  }
+
+  // 2. Fallback to standard SMTP
   const transporter = getTransporter();
 
   if (transporter) {
