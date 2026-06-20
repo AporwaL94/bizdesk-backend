@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import fs from 'fs';
 import path from 'path';
 import { env } from '../config/env';
@@ -8,19 +9,24 @@ const getTransporter = () => {
   if (!env.emailHost || !env.emailUser || !env.emailPass) {
     return null;
   }
-  return nodemailer.createTransport({
+  const options: SMTPTransport.Options & { family: 4 } = {
     host: env.emailHost,
     port: env.emailPort,
     secure: env.emailSecure,
+    family: 4,
     auth: {
       user: env.emailUser,
       pass: env.emailPass,
     },
-  });
+  };
+
+  return nodemailer.createTransport(options);
 };
 
 // Main helper to send email
 async function sendMail(to: string, subject: string, html: string, emailType: string) {
+  let fallbackReason = 'No email provider configured';
+
   // 1. Try Resend if API key is provided (bypasses Render SMTP port blocking)
   if (env.resendApiKey) {
     try {
@@ -49,9 +55,11 @@ async function sendMail(to: string, subject: string, html: string, emailType: st
         console.log(`[EmailService] Email sent successfully to ${to} via Resend (ID: ${resData.id}, Type: ${emailType})`);
         return true;
       } else {
+        fallbackReason = `Resend API error: ${JSON.stringify(resData)}`;
         console.error(`[EmailService] Resend API error sending email to ${to}:`, resData);
       }
     } catch (error) {
+      fallbackReason = `Resend network error: ${error instanceof Error ? error.message : String(error)}`;
       console.error(`[EmailService] Resend network error sending email to ${to}:`, error);
     }
   }
@@ -70,6 +78,7 @@ async function sendMail(to: string, subject: string, html: string, emailType: st
       console.log(`[EmailService] Email sent successfully to ${to} (Type: ${emailType})`);
       return true;
     } catch (error) {
+      fallbackReason = `SMTP error: ${error instanceof Error ? error.message : String(error)}`;
       console.error(`[EmailService] Failed to send email to ${to}:`, error);
     }
   }
@@ -85,7 +94,8 @@ async function sendMail(to: string, subject: string, html: string, emailType: st
     fs.writeFileSync(filePath, html, 'utf8');
     
     console.log('\n======================================================================');
-    console.log(`[MOCK EMAIL SERVICE] SMTP details missing, saved email locally:`);
+    console.log(`[MOCK EMAIL SERVICE] Email delivery failed, saved email locally.`);
+    console.log(`Reason:   ${fallbackReason}`);
     console.log(`To:       ${to}`);
     console.log(`Subject:  ${subject}`);
     console.log(`File:     file:///${filePath.replace(/\\/g, '/')}`);
