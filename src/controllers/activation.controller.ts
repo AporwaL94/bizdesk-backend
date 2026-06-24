@@ -214,3 +214,14 @@ export const getSubscriptionStatus = catchAsync(async (_req: Request, res: Respo
     daysRemaining
   });
 });
+
+export const getVersionCheck = catchAsync(async (_req: Request, res: Response) => {
+  res.json({
+    latestVersion: env.latestAppVersion,
+    latestBuildNumber: env.latestAppBuild,
+    downloadUrl: env.appDownloadUrl,
+    releaseNotes: env.appReleaseNotes,
+    minVersion: env.appMinVersion,
+  });
+});
+

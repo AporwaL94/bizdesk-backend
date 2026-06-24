@@ -15,5 +15,10 @@ export const env = {
   emailUser: process.env.EMAIL_USER ?? '',
   emailPass: process.env.EMAIL_PASS ?? '',
   emailFrom: process.env.EMAIL_FROM ?? 'Kirana Desk <no-reply@kiranadesk.com>',
-  adminUpiId: process.env.ADMIN_UPI_ID ?? 'kiranadesk@upi'
+  adminUpiId: process.env.ADMIN_UPI_ID ?? 'kiranadesk@upi',
+  latestAppVersion: process.env.LATEST_APP_VERSION ?? '1.0.0',
+  latestAppBuild: process.env.LATEST_APP_BUILD ?? '1',
+  appDownloadUrl: process.env.APP_DOWNLOAD_URL ?? 'https://bizdesk.kiranadesk.com/download',
+  appReleaseNotes: process.env.APP_RELEASE_NOTES ?? 'Initial stable release.\n• Performance improvements.\n• Bug fixes.',
+  appMinVersion: process.env.APP_MIN_VERSION ?? '1.0.0'
 };
