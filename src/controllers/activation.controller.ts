@@ -53,6 +53,12 @@ export const activate = catchAsync(async (req: Request, res: Response) => {
     }
 
     if (existingVendor.deviceId.startsWith('reset-')) {
+      const existingDeviceVendor = await Vendor.findOne({ where: { deviceId } });
+      if (existingDeviceVendor && !existingDeviceVendor.deviceId.startsWith('reset-')) {
+        res.status(409).json({ message: 'This device is already registered with another activation key. Please ask the administrator to de-register the existing device before activating a new key.' });
+        return;
+      }
+
       await existingVendor.update({
         deviceId,
         deviceName: deviceName ?? existingVendor.deviceName
@@ -85,6 +91,12 @@ export const activate = catchAsync(async (req: Request, res: Response) => {
 
   if (!isPlanType(activationKey.plan)) {
     res.status(400).json({ message: 'Activation key has an invalid plan.' });
+    return;
+  }
+
+  const existingDeviceVendor = await Vendor.findOne({ where: { deviceId } });
+  if (existingDeviceVendor && !existingDeviceVendor.deviceId.startsWith('reset-')) {
+    res.status(409).json({ message: 'This device is already registered with another activation key. Please ask the administrator to de-register the existing device before activating a new key.' });
     return;
   }
 
