@@ -37,6 +37,11 @@ export const activate = catchAsync(async (req: Request, res: Response) => {
     return;
   }
 
+  if (activationKey.status === 'pending_payment') {
+    res.status(402).json({ message: 'Payment is pending for this activation key.' });
+    return;
+  }
+
   if (activationKey.status === 'activated') {
     const existingVendor = activationKey.vendorId
       ? await Vendor.findByPk(activationKey.vendorId)
