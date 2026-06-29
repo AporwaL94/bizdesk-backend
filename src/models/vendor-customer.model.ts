@@ -7,9 +7,13 @@ import {
   Sequelize
 } from 'sequelize';
 import { Vendor } from './vendor.model';
+import { App } from './app.model';
+
 
 export class VendorCustomer extends Model<InferAttributes<VendorCustomer>, InferCreationAttributes<VendorCustomer>> {
   declare id: CreationOptional<string>;
+  declare appId: CreationOptional<string>;
+
   declare vendorId: string;
   declare localId: string;
   declare name: string;
@@ -21,6 +25,7 @@ export class VendorCustomer extends Model<InferAttributes<VendorCustomer>, Infer
   declare updatedAt: CreationOptional<Date>;
 
   static associate() {
+    VendorCustomer.belongsTo(App, { foreignKey: 'appId', as: 'app' });
     VendorCustomer.belongsTo(Vendor, { foreignKey: 'vendorId', as: 'vendor' });
   }
 }
@@ -31,6 +36,14 @@ export function initVendorCustomer(sequelize: Sequelize) {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
+    },
+    appId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'apps',
+        key: 'id'
+      }
     },
     vendorId: { type: DataTypes.UUID, allowNull: false },
     localId: { type: DataTypes.STRING, allowNull: false },
@@ -47,3 +60,4 @@ export function initVendorCustomer(sequelize: Sequelize) {
     indexes: [{ unique: true, fields: ['vendorId', 'localId'] }]
   });
 }
+

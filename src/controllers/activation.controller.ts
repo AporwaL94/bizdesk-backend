@@ -10,8 +10,8 @@ import {
   resolveSubscriptionState
 } from '../services/subscription.service';
 
-function signVendorToken(vendorId: string) {
-  return jwt.sign({ vendorId }, env.jwtSecret, { expiresIn: '30d' });
+function signVendorToken(vendorId: string, appId: string) {
+  return jwt.sign({ vendorId, appId }, env.jwtSecret, { expiresIn: '30d' });
 }
 
 export const activate = catchAsync(async (req: Request, res: Response) => {
@@ -65,7 +65,7 @@ export const activate = catchAsync(async (req: Request, res: Response) => {
       });
 
       res.json({
-        token: signVendorToken(existingVendor.id),
+        token: signVendorToken(existingVendor.id, existingVendor.appId),
         vendorId: existingVendor.id,
         plan: existingVendor.plan,
         planExpiry: existingVendor.planExpiry,
@@ -80,7 +80,7 @@ export const activate = catchAsync(async (req: Request, res: Response) => {
     }
 
     res.json({
-      token: signVendorToken(existingVendor.id),
+      token: signVendorToken(existingVendor.id, existingVendor.appId),
       vendorId: existingVendor.id,
       plan: existingVendor.plan,
       planExpiry: existingVendor.planExpiry,
@@ -161,7 +161,7 @@ export const activate = catchAsync(async (req: Request, res: Response) => {
   });
 
   res.json({
-    token: signVendorToken(vendor.id),
+    token: signVendorToken(vendor.id, vendor.appId),
     vendorId: vendor.id,
     plan: vendor.plan,
     planExpiry: vendor.planExpiry,

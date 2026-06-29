@@ -271,10 +271,11 @@ export async function generateKeys(req: Request, res: Response) {
   const count = Math.max(1, Math.min(500, Number(req.body.count ?? 1)));
   const plan = isPlanType(req.body.plan) ? req.body.plan : 'monthly';
   const label = typeof req.body.label === 'string' ? req.body.label : null;
+  const appId = res.locals.appId;
   const keys = [];
 
   while (keys.length < count) {
-    const key = generateActivationKey();
+    const key = generateActivationKey(appId);
     const [record, created] = await ActivationKey.findOrCreate({
       where: { key },
       defaults: { key, plan, label, status: 'unused', vendorId: null }
@@ -284,6 +285,7 @@ export async function generateKeys(req: Request, res: Response) {
 
   res.status(201).json(keys);
 }
+
 
 export async function listKeys(_req: Request, res: Response) {
   const keys = await ActivationKey.findAll({
@@ -452,7 +454,8 @@ export async function createKeyRequest(req: Request, res: Response) {
     return;
   }
 
-  const key = generateActivationKey();
+  const appId = res.locals.appId;
+  const key = generateActivationKey(appId);
   const keyRecord = await ActivationKey.create({
     key,
     status: 'pending_payment',

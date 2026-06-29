@@ -7,9 +7,13 @@ import {
   Sequelize
 } from 'sequelize';
 import { Vendor } from './vendor.model';
+import { App } from './app.model';
+
 
 export class VendorInvoice extends Model<InferAttributes<VendorInvoice>, InferCreationAttributes<VendorInvoice>> {
   declare id: CreationOptional<string>;
+  declare appId: CreationOptional<string>;
+
   declare vendorId: string;
   declare localId: string;
   declare invoiceNumber: string;
@@ -23,6 +27,7 @@ export class VendorInvoice extends Model<InferAttributes<VendorInvoice>, InferCr
   declare updatedAt: CreationOptional<Date>;
 
   static associate() {
+    VendorInvoice.belongsTo(App, { foreignKey: 'appId', as: 'app' });
     VendorInvoice.belongsTo(Vendor, { foreignKey: 'vendorId', as: 'vendor' });
   }
 }
@@ -33,6 +38,14 @@ export function initVendorInvoice(sequelize: Sequelize) {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
+    },
+    appId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'apps',
+        key: 'id'
+      }
     },
     vendorId: { type: DataTypes.UUID, allowNull: false },
     localId: { type: DataTypes.STRING, allowNull: false },
@@ -51,3 +64,4 @@ export function initVendorInvoice(sequelize: Sequelize) {
     indexes: [{ unique: true, fields: ['vendorId', 'localId'] }]
   });
 }
+

@@ -8,10 +8,13 @@ import {
 } from 'sequelize';
 import { Vendor } from './vendor.model';
 import { Payment } from './payment.model';
+import { App } from './app.model';
 
 
 export class ActivationKey extends Model<InferAttributes<ActivationKey>, InferCreationAttributes<ActivationKey>> {
   declare id: CreationOptional<string>;
+  declare appId: CreationOptional<string>;
+
   declare key: string;
   declare status: CreationOptional<string>;
   declare plan: CreationOptional<string>;
@@ -23,6 +26,7 @@ export class ActivationKey extends Model<InferAttributes<ActivationKey>, InferCr
   declare updatedAt: CreationOptional<Date>;
 
   static associate() {
+    ActivationKey.belongsTo(App, { foreignKey: 'appId', as: 'app' });
     ActivationKey.belongsTo(Vendor, { foreignKey: 'vendorId', as: 'vendor' });
     ActivationKey.hasMany(Payment, { foreignKey: 'activationKeyId', as: 'payments' });
   }
@@ -35,6 +39,14 @@ export function initActivationKey(sequelize: Sequelize) {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
+    appId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'apps',
+        key: 'id'
+      }
+    },
     key: { type: DataTypes.STRING, allowNull: false, unique: true },
     status: { type: DataTypes.STRING, allowNull: false, defaultValue: 'unused' },
     plan: { type: DataTypes.STRING, allowNull: false, defaultValue: 'monthly' },
@@ -46,3 +58,4 @@ export function initActivationKey(sequelize: Sequelize) {
     updatedAt: DataTypes.DATE
   }, { sequelize, tableName: 'activation_keys' });
 }
+

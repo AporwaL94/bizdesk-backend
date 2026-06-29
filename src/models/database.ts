@@ -1,8 +1,11 @@
 import { Sequelize } from 'sequelize';
 import { execSync } from 'child_process';
+import fs from 'fs';
 import { env } from '../config/env';
+import { appStorage } from '../middleware/app-storage';
 
 // Import all models and their initialization functions directly
+import { App, initApp } from './app.model';
 import { Vendor, initVendor } from './vendor.model';
 import { ActivationKey, initActivationKey } from './activation-key.model';
 import { Payment, initPayment } from './payment.model';
@@ -33,7 +36,76 @@ export const sequelize = isPostgres
   });
 
 function initModels(seq: Sequelize) {
+  // Register global hooks for multi-tenancy scoping first so models inherit them
+  seq.addHook('beforeFind', function(this: any, options: any) {
+    const store = appStorage.getStore();
+    const model = this;
+
+    if (store?.appId && options.bypassAppFilter !== true) {
+      if (model && model.rawAttributes && model.rawAttributes.appId) {
+        options.where = {
+          ...options.where,
+          appId: store.appId
+        };
+      }
+    }
+  });
+
+  seq.addHook('beforeValidate', function(instance: any) {
+    const store = appStorage.getStore();
+    if (store?.appId && instance.constructor.rawAttributes.appId && !instance.appId) {
+      instance.appId = store.appId;
+    }
+  });
+
+  seq.addHook('beforeBulkCreate', function(instances: any[], options: any) {
+    const store = appStorage.getStore();
+    if (store?.appId) {
+      for (const instance of instances) {
+        if (instance.constructor.rawAttributes.appId && !instance.appId) {
+          instance.appId = store.appId;
+        }
+      }
+    }
+  });
+
+  seq.addHook('beforeDestroy', function(instance: any) {
+    const store = appStorage.getStore();
+    if (store?.appId && instance.constructor.rawAttributes.appId && instance.appId !== store.appId) {
+      throw new Error('Unauthorized cross-application data modification attempt.');
+    }
+  });
+
+  seq.addHook('beforeBulkDestroy', function(this: any, options: any) {
+    const store = appStorage.getStore();
+    const model = this;
+    if (store?.appId && options.bypassAppFilter !== true) {
+      if (model && model.rawAttributes && model.rawAttributes.appId) {
+        options.where = {
+          ...options.where,
+          appId: store.appId
+        };
+      }
+    }
+  });
+
+  seq.addHook('beforeBulkUpdate', function(this: any, options: any) {
+    const store = appStorage.getStore();
+    const model = this;
+    if (store?.appId && options.bypassAppFilter !== true) {
+      if (model && model.rawAttributes && model.rawAttributes.appId) {
+        options.where = {
+          ...options.where,
+          appId: store.appId
+        };
+      }
+    }
+  });
+
+
+
   // Initialize each model schema
+  initApp(seq);
   initVendor(seq);
   initActivationKey(seq);
   initPayment(seq);
@@ -43,6 +115,7 @@ function initModels(seq: Sequelize) {
   initVendorCustomer(seq);
 
   // Define associations/relations
+  App.associate();
   Vendor.associate();
   ActivationKey.associate();
   Payment.associate();
@@ -51,6 +124,7 @@ function initModels(seq: Sequelize) {
   VendorShop.associate();
   VendorCustomer.associate();
 }
+
 
 export async function initDatabase() {
   initModels(sequelize);
@@ -65,3 +139,4 @@ export async function initDatabase() {
     throw error;
   }
 }
+

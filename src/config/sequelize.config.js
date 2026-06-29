@@ -21,7 +21,7 @@ if (isPostgres) {
 } else {
   const storage = dbUrl.startsWith('sqlite://')
     ? dbUrl.replace('sqlite://', '')
-    : 'database.sqlite';
+    : dbUrl;
 
   config = {
     dialect: 'sqlite',

@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
-    "db:migrate:undo": "sequelize-cli db:migrate:undo"
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate"
+
   },
   "dependencies": {
     "cors": "^2.8.5",

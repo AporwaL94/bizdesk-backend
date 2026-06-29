@@ -11,10 +11,13 @@ import { VendorInvoice } from './vendor-invoice.model';
 import { Payment } from './payment.model';
 import { VendorShop } from './vendor-shop.model';
 import { ActivationKey } from './activation-key.model';
+import { App } from './app.model';
 
 
 export class Vendor extends Model<InferAttributes<Vendor>, InferCreationAttributes<Vendor>> {
   declare id: CreationOptional<string>;
+  declare appId: CreationOptional<string>;
+
   declare deviceId: string;
   declare deviceName: string | null;
   declare activatedAt: Date | null;
@@ -32,6 +35,7 @@ export class Vendor extends Model<InferAttributes<Vendor>, InferCreationAttribut
   declare shop?: any;
 
   static associate() {
+    Vendor.belongsTo(App, { foreignKey: 'appId', as: 'app' });
     Vendor.hasMany(VendorProduct, { foreignKey: 'vendorId', as: 'products' });
     Vendor.hasMany(VendorInvoice, { foreignKey: 'vendorId', as: 'invoices' });
     Vendor.hasMany(Payment, { foreignKey: 'vendorId', as: 'payments' });
@@ -46,6 +50,14 @@ export function initVendor(sequelize: Sequelize) {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
+    },
+    appId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'apps',
+        key: 'id'
+      }
     },
     deviceId: { type: DataTypes.STRING, allowNull: false, unique: true },
     deviceName: DataTypes.STRING,
@@ -63,3 +75,4 @@ export function initVendor(sequelize: Sequelize) {
     updatedAt: DataTypes.DATE
   }, { sequelize, tableName: 'vendors' });
 }
+

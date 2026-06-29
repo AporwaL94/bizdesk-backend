@@ -8,10 +8,13 @@ import {
 } from 'sequelize';
 import { Vendor } from './vendor.model';
 import { ActivationKey } from './activation-key.model';
+import { App } from './app.model';
 
 
 export class Payment extends Model<InferAttributes<Payment>, InferCreationAttributes<Payment>> {
   declare id: CreationOptional<string>;
+  declare appId: CreationOptional<string>;
+
   declare vendorId: string | null;
   declare activationKeyId: string | null;
   declare amount: number;
@@ -26,6 +29,7 @@ export class Payment extends Model<InferAttributes<Payment>, InferCreationAttrib
   declare updatedAt: CreationOptional<Date>;
 
   static associate() {
+    Payment.belongsTo(App, { foreignKey: 'appId', as: 'app' });
     Payment.belongsTo(Vendor, { foreignKey: 'vendorId', as: 'vendor' });
     Payment.belongsTo(ActivationKey, { foreignKey: 'activationKeyId', as: 'activationKey' });
   }
@@ -37,6 +41,14 @@ export function initPayment(sequelize: Sequelize) {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
+    },
+    appId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'apps',
+        key: 'id'
+      }
     },
     vendorId: { type: DataTypes.UUID, allowNull: true },
     activationKeyId: { type: DataTypes.UUID, allowNull: true },
@@ -52,3 +64,4 @@ export function initPayment(sequelize: Sequelize) {
     updatedAt: DataTypes.DATE
   }, { sequelize, tableName: 'payments' });
 }
+
