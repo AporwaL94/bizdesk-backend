@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Kirana Desk API Documentation",
+    "title": "BizDesk API Documentation",
     "version": "1.0.0",
-    "description": "API documentation for the Kirana Desk backend including Activation, Synchronization, and Admin Dashboard APIs."
+    "description": "API documentation for the BizDesk backend including Activation, Synchronization, and Admin Dashboard APIs."
   },
   "servers": [
     {
@@ -162,7 +162,7 @@
     "/api/activate": {
       "post": {
         "summary": "Activate a device",
-        "description": "Activate Kirana Desk application for a device using an activation key.",
+        "description": "Activate BizDesk application for a device using an activation key.",
         "requestBody": {
           "required": true,
           "content": {

@@ -8,7 +8,7 @@ initDatabase()
   .then(() => {
     initCronJobs();
     const server = app.listen(env.port, () => {
-      console.log(`Kirana Desk backend running on http://localhost:${env.port}`);
+      console.log(`BizDesk backend running on http://localhost:${env.port}`);
     });
 
     // Graceful shutdown — releases port before tsx watch restarts the process.
@@ -42,7 +42,7 @@ initDatabase()
     });
   })
   .catch((error) => {
-    console.error('Failed to start Kirana Desk backend', error);
+    console.error('Failed to start BizDesk backend', error);
     process.exit(1);
   });
 

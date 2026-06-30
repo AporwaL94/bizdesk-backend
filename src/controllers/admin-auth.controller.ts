@@ -17,12 +17,12 @@ export async function login(req: Request, res: Response) {
     const token = jwt.sign(
       { adminId: 'super-admin', role: 'SUPER_ADMIN', appId: null, applicationId: null },
       env.jwtSecret,
-      { expiresIn: '7d' }
+      { expiresIn: '30m' }
     );
     res.json({
       token,
       name: 'Super Admin',
-      email: 'admin@kiranadesk.com',
+      email: 'admin@bizdesk.com',
       role: 'SUPER_ADMIN',
       applicationId: null
     });
@@ -49,7 +49,7 @@ export async function login(req: Request, res: Response) {
   const token = jwt.sign(
     { adminId: admin.id, role: admin.role, appId: admin.applicationId, applicationId: admin.applicationId },
     env.jwtSecret,
-    { expiresIn: '7d' }
+    { expiresIn: '30m' }
   );
 
   res.json({

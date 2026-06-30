@@ -31,7 +31,7 @@ app.use((req, res, next) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'kirana-desk-backend' });
+  res.json({ ok: true, service: 'bizdesk-backend' });
 });
 
 // App-aware routing

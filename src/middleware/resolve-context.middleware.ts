@@ -28,7 +28,7 @@ export async function resolveContext(req: Request, res: Response, next: NextFunc
     res.locals.admin = {
       id: 'super-admin',
       name: 'Super Admin',
-      email: 'admin@kiranadesk.com',
+      email: 'admin@bizdesk.com',
       role: 'SUPER_ADMIN',
       applicationId: null,
       permissions: ['*']
@@ -45,7 +45,7 @@ export async function resolveContext(req: Request, res: Response, next: NextFunc
         res.locals.admin = {
           id: 'super-admin',
           name: 'Super Admin',
-          email: 'admin@kiranadesk.com',
+          email: 'admin@bizdesk.com',
           role: 'SUPER_ADMIN',
           applicationId: null,
           permissions: ['*']
