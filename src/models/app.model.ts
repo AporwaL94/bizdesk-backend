@@ -125,5 +125,5 @@ export function initApp(sequelize: Sequelize) {
 
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
-  }, { sequelize, tableName: 'apps' });
+  }, { sequelize, tableName: 'applications' });
 }

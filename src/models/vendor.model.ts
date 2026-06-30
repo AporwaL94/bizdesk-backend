@@ -54,8 +54,9 @@ export function initVendor(sequelize: Sequelize) {
     appId: {
       type: DataTypes.STRING,
       allowNull: false,
+      field: 'application_id',
       references: {
-        model: 'apps',
+        model: 'applications',
         key: 'id'
       }
     },

@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { requireAdminSecret } from '../../middleware/admin.middleware';
 import { catchAsync } from '../../utils/catch-async';
 import {
   createApp,
@@ -12,9 +11,11 @@ import {
   uploadAppAsset
 } from './apps.controller';
 
+import { requireAdminRole } from '../../middleware/resolve-permissions.middleware';
+
 export const appsRoutes = Router();
 
-appsRoutes.use(requireAdminSecret);
+appsRoutes.use(requireAdminRole(['SUPER_ADMIN']));
 
 appsRoutes.get('/', catchAsync(listApps));
 appsRoutes.post('/', catchAsync(createApp));

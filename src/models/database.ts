@@ -13,6 +13,8 @@ import { VendorProduct, initVendorProduct } from './vendor-product.model';
 import { VendorInvoice, initVendorInvoice } from './vendor-invoice.model';
 import { VendorShop, initVendorShop } from './vendor-shop.model';
 import { VendorCustomer, initVendorCustomer } from './vendor-customer.model';
+import { ApplicationAdmin, initApplicationAdmin } from './application-admin.model';
+import { ImpersonationLog, initImpersonationLog } from './impersonation-log.model';
 
 const isPostgres = env.databaseUrl.startsWith('postgres://') || env.databaseUrl.startsWith('postgresql://');
 
@@ -31,7 +33,7 @@ export const sequelize = isPostgres
     dialect: 'sqlite',
     storage: env.databaseUrl.startsWith('sqlite://')
       ? env.databaseUrl.replace('sqlite://', '')
-      : 'database.sqlite',
+      : env.databaseUrl,
     logging: false
   });
 
@@ -113,6 +115,8 @@ function initModels(seq: Sequelize) {
   initVendorInvoice(seq);
   initVendorShop(seq);
   initVendorCustomer(seq);
+  initApplicationAdmin(seq);
+  initImpersonationLog(seq);
 
   // Define associations/relations
   App.associate();
@@ -123,6 +127,8 @@ function initModels(seq: Sequelize) {
   VendorInvoice.associate();
   VendorShop.associate();
   VendorCustomer.associate();
+  ApplicationAdmin.associate();
+  ImpersonationLog.associate();
 }
 
 

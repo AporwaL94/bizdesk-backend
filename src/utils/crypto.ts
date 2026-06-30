@@ -1,0 +1,11 @@
+import crypto from 'crypto';
+
+export function hashPassword(password: string): string {
+  if (!password) return '';
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+export function comparePassword(password: string, hash: string): boolean {
+  if (!password || !hash) return false;
+  return hashPassword(password) === hash;
+}

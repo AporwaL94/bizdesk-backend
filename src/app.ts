@@ -10,6 +10,8 @@ import { globalErrorHandler } from './middleware/error.middleware';
 import { resolveApplication } from './middleware/resolve-application.middleware';
 import { appsRoutes } from './modules/apps/apps.routes';
 import { brandingRoutes } from './modules/branding/branding.routes';
+import { resolveContext } from './middleware/resolve-context.middleware';
+import { resolveImpersonation } from './middleware/resolve-impersonation.middleware';
 
 export const app = express();
 
@@ -37,8 +39,8 @@ app.use('/api/app', resolveApplication, brandingRoutes);
 app.use('/api', resolveApplication, activationRoutes);
 app.use('/api/sync', resolveApplication, syncRoutes);
 
-app.use('/admin/apps', resolveApplication, appsRoutes);
-app.use('/admin', resolveApplication, adminRoutes);
+app.use('/admin/apps', resolveApplication, resolveContext, resolveImpersonation, appsRoutes);
+app.use('/admin', resolveApplication, resolveContext, resolveImpersonation, adminRoutes);
 
 // Global Error Handler Middleware
 app.use(globalErrorHandler);

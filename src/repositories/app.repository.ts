@@ -1,8 +1,22 @@
-import { App } from '../models';
+import { App, Vendor, ActivationKey, Payment } from '../models';
 
 export class AppRepository {
   async list() {
-    return App.findAll({ bypassAppFilter: true } as any);
+    const apps = await App.findAll({ bypassAppFilter: true } as any);
+    const results = [];
+    for (const app of apps) {
+      const vendorCount = await Vendor.count({ where: { appId: app.id }, bypassAppFilter: true } as any);
+      const subscriptionCount = await ActivationKey.count({ where: { appId: app.id, status: 'activated' }, bypassAppFilter: true } as any);
+      const payments = await Payment.findAll({ where: { appId: app.id }, bypassAppFilter: true } as any);
+      const revenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      results.push({
+        ...app.toJSON(),
+        vendorCount,
+        subscriptionCount,
+        revenue
+      });
+    }
+    return results;
   }
 
   async findById(id: string) {
