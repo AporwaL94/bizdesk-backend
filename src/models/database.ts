@@ -45,9 +45,10 @@ function initModels(seq: Sequelize) {
 
     if (store?.appId && options.bypassAppFilter !== true) {
       if (model && model.rawAttributes && model.rawAttributes.appId) {
+        const fieldName = model.rawAttributes.appId.field || 'appId';
         options.where = {
           ...options.where,
-          appId: store.appId
+          [fieldName]: store.appId
         };
       }
     }
@@ -83,9 +84,10 @@ function initModels(seq: Sequelize) {
     const model = this;
     if (store?.appId && options.bypassAppFilter !== true) {
       if (model && model.rawAttributes && model.rawAttributes.appId) {
+        const fieldName = model.rawAttributes.appId.field || 'appId';
         options.where = {
           ...options.where,
-          appId: store.appId
+          [fieldName]: store.appId
         };
       }
     }
@@ -96,9 +98,10 @@ function initModels(seq: Sequelize) {
     const model = this;
     if (store?.appId && options.bypassAppFilter !== true) {
       if (model && model.rawAttributes && model.rawAttributes.appId) {
+        const fieldName = model.rawAttributes.appId.field || 'appId';
         options.where = {
           ...options.where,
-          appId: store.appId
+          [fieldName]: store.appId
         };
       }
     }

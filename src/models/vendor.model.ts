@@ -60,7 +60,7 @@ export function initVendor(sequelize: Sequelize) {
         key: 'id'
       }
     },
-    deviceId: { type: DataTypes.STRING, allowNull: false, unique: true },
+    deviceId: { type: DataTypes.STRING, allowNull: false },
     deviceName: DataTypes.STRING,
     activatedAt: DataTypes.DATE,
     plan: { type: DataTypes.STRING, allowNull: false, defaultValue: 'none' },
@@ -74,6 +74,15 @@ export function initVendor(sequelize: Sequelize) {
     syncToMobilePending: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE
-  }, { sequelize, tableName: 'vendors' });
+  }, {
+    sequelize,
+    tableName: 'vendors',
+    indexes: [
+      {
+        unique: true,
+        fields: ['appId', 'deviceId']
+      }
+    ]
+  });
 }
 
